@@ -6,7 +6,7 @@ from tkinter import Label, Frame
 
 
 class StatusForm:
-    def __init__(self, name="", text="", done_delay: float = 2):
+    def __init__(self, name="", text="", done_delay: float = 0):
         self.text = text
         self.name = name
         self.done_delay = done_delay
@@ -27,7 +27,7 @@ class StatusBar:
                  y: int = 0,
                  expand: Literal["up", "down", "horizontal"] = "down",
                  width: int = 200,
-                 height: int = 20,
+                 height: int = 19,
                  bg: str = "",
                  relief: Literal["raised", "sunken", "groove", "flat", "ridged", "solid"] = "groove"):
         anchor: Literal["nw", "sw"] = "nw"
@@ -40,20 +40,25 @@ class StatusBar:
         self.height = height
         self.frame = Frame(master, width=width, height=height)
         self.frame.pack_propagate(False)  # Stops child widgets of frame from resizing it
-        self.label = Label(self.frame, anchor=anchor, bg=bg, height=1, relief=relief)
+        self.label = Label(self.frame, anchor=anchor, bg=bg, height=1, relief=relief, justify="left")
         self.frame.place(x=x, y=y)
         self.label.pack(fill="both", expand=True)
         self.processes: List[StatusForm] = list()
 
         self._update()
 
-    def set(self, form: StatusForm):
-        form.text.replace("\n", " ")
-        process = self.get_process(form.name)
+    def set(self, name="", text="", done_delay=0, form: StatusForm = None):
+        if form is not None:
+            text = form.text
+            name = form.name
+            done_delay = form.done_delay
+
+        text.replace("\n", " ")
+        process = self.get_process(name)
         if process is None:
-            self.processes.append(form)
+            self.processes.append(StatusForm(name, text, done_delay))
         else:
-            process.text = form.text
+            process.text = text
 
     def get_process(self, name: str) -> Optional[StatusForm]:
         for process in self.processes:
@@ -61,8 +66,8 @@ class StatusBar:
                 return process
         return None
 
-    def _set_frame_size(self, rows):
-        pass
+    def _set_frame_height(self, rows: int):
+        self.frame.config(height=self.height * rows)
 
     def done(self, name: str, new_text=""):
         process = self.get_process(name)
@@ -88,7 +93,7 @@ class StatusBar:
 
         elif self.expand == "up":
             # TODO: algorithm to adjust the height
-            self._set_frame_size(1)
+            self._set_frame_height(1)
             pass
         elif self.expand == "horizontal":
             pass
@@ -101,6 +106,8 @@ class StatusBar:
         height = len(self.processes)
         if len(self.processes) == 0:
             height = 1
+        if self.label.cget("text").startswith(" "):
+            raise Exception(f"text is starting with space at ")
         if self.label.cget("text") != text:
             self.frame.config(height=height * self.height)
             self.label.config(text=text, height=height)
