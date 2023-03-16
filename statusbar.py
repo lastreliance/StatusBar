@@ -1,11 +1,12 @@
 import time
 
-from typing import Optional, Literal, List
+from typing_extensions import Literal
+from typing import Optional, List
 from tkinter import Label, Frame
 
 
 class StatusForm:
-    def __init__(self, text="", name="", done_delay: float = 0):
+    def __init__(self, name="", text="", done_delay: float = 2):
         self.text = text
         self.name = name
         self.done_delay = done_delay
@@ -19,21 +20,27 @@ class StatusForm:
 
 
 class StatusBar:
+    default_color = 'SystemButtonFace'
+
     def __init__(self, master,
                  x: int = 0,
                  y: int = 0,
                  expand: Literal["up", "down", "horizontal"] = "down",
                  width: int = 200,
                  height: int = 20,
-                 bg: str = ""):
+                 bg: str = "",
+                 relief: Literal["raised", "sunken", "groove", "flat", "ridged", "solid"] = "groove"):
         anchor: Literal["nw", "sw"] = "nw"
         if expand == "up":
             anchor = "sw"
+        if not bg:
+            bg = StatusBar.default_color
         self.expand = expand
         self.width = width
+        self.height = height
         self.frame = Frame(master, width=width, height=height)
         self.frame.pack_propagate(False)  # Stops child widgets of frame from resizing it
-        self.label = Label(self.frame, anchor=anchor, bg=bg, height=1)
+        self.label = Label(self.frame, anchor=anchor, bg=bg, height=1, relief=relief)
         self.frame.place(x=x, y=y)
         self.label.pack(fill="both", expand=True)
         self.processes: List[StatusForm] = list()
@@ -41,7 +48,7 @@ class StatusBar:
         self._update()
 
     def set(self, form: StatusForm):
-        form.text.replace("\n", "")
+        form.text.replace("\n", " ")
         process = self.get_process(form.name)
         if process is None:
             self.processes.append(form)
@@ -95,8 +102,10 @@ class StatusBar:
         if len(self.processes) == 0:
             height = 1
         if self.label.cget("text") != text:
+            self.frame.config(height=height * self.height)
             self.label.config(text=text, height=height)
-            self.label.update()
+            self.label.update_idletasks()
+
         self.label.after(33, self._update)
 
     def delete(self, name: str):
