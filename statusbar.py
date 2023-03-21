@@ -4,6 +4,9 @@ from typing_extensions import Literal
 from typing import Optional, List
 from tkinter import Label, Frame
 
+# Todo:
+#  work on text height https://stackoverflow.com/questions/3950687/how-to-find-out-the-current-widget-size-in-tkinter
+
 
 class StatusForm:
     def __init__(self, name="", text="", done_delay: float = 0):
@@ -26,8 +29,9 @@ class StatusBar:
                  x: int = 0,
                  y: int = 0,
                  expand: Literal["up", "down", "horizontal"] = "down",
-                 width: int = 200,
+                 row_width: int = 200,
                  height: int = 19,
+                 pad_y: int = 1,
                  bg: str = "",
                  relief: Literal["raised", "sunken", "groove", "flat", "ridged", "solid"] = "groove"):
         anchor: Literal["nw", "sw"] = "nw"
@@ -35,12 +39,15 @@ class StatusBar:
             anchor = "sw"
         if not bg:
             bg = StatusBar.default_color
+
+        self.ycor = y
+        self.pad_y = pad_y
         self.expand = expand
-        self.width = width
+        self.width = row_width
         self.height = height
-        self.frame = Frame(master, width=width, height=height)
+        self.frame = Frame(master, width=row_width, height=height)
         self.frame.pack_propagate(False)  # Stops child widgets of frame from resizing it
-        self.label = Label(self.frame, anchor=anchor, bg=bg, height=1, relief=relief, justify="left")
+        self.label = Label(self.frame, anchor=anchor, bg=bg, height=1, relief=relief, justify="left", pady=pad_y)
         self.frame.place(x=x, y=y)
         self.label.pack(fill="both", expand=True)
         self.processes: List[StatusForm] = list()
@@ -66,9 +73,6 @@ class StatusBar:
                 return process
         return None
 
-    def _set_frame_height(self, rows: int):
-        self.frame.config(height=self.height * rows)
-
     def done(self, name: str, new_text=""):
         process = self.get_process(name)
         if process is None:
@@ -92,9 +96,19 @@ class StatusBar:
                 text = text[:-1]
 
         elif self.expand == "up":
-            # TODO: algorithm to adjust the height
-            self._set_frame_height(1)
-            pass
+            for process in self.processes:
+                text = process.text + "\n" + text
+            if text.endswith("\n"):
+                text = text[:-1]
+            displayed = len(self.label.cget("text").splitlines())
+            actual = len(text.splitlines())
+            if actual == 0:
+                actual = 1
+            if actual - displayed:
+                y = self.ycor - self._get_text_height(actual)
+                self.frame.place(y=y)
+                print(self._get_text_height(actual))
+
         elif self.expand == "horizontal":
             pass
 
@@ -106,14 +120,19 @@ class StatusBar:
         height = len(self.processes)
         if len(self.processes) == 0:
             height = 1
-        if self.label.cget("text").startswith(" "):
-            raise Exception(f"text is starting with space at ")
         if self.label.cget("text") != text:
-            self.frame.config(height=height * self.height)
+            self.frame.config(height=self._get_text_height(height))
             self.label.config(text=text, height=height)
             self.label.update_idletasks()
 
         self.label.after(33, self._update)
+
+    # Todo: rework
+    def _get_text_height(self, rows):
+        frame_height = self.height * rows
+        border = self.pad_y * 2
+        text_gaps = (rows - 1) * self.pad_y
+        return frame_height + border - text_gaps
 
     def delete(self, name: str):
         for process in self.processes:

@@ -5,35 +5,33 @@ from threading import Thread
 from statusbar import StatusBar, StatusForm
 
 
-def a(status_bar):
-    for i in range(30):
-        status_bar.set(form=StatusForm("1", f"Task 1:{i}"))
-        time.sleep(2*0.15)
+def func(status_bar, name: str, delay: float):
+    def inner(bar, n, d):
+        for i in range(40):
+            bar.set(form=StatusForm(n, f"Task {n}:{i}"))
+            time.sleep(d)
 
-    status_bar.done("1")
+        status_bar.done(n)
 
-
-def c(status_bar):
-    for i in range(40):
-        status_bar.set(form=StatusForm("2", f"Task 2:{i}"))
-        time.sleep(0.1)
-
-    status_bar.done("2")
+    Thread(target=lambda: inner(status_bar, name, delay)).start()
 
 
-def b(arg):
-    start(a, arg)
-    start(c, arg)
+def down(arg):
+    func(arg, "1", 0.3)
+    func(arg, "2", 0.1)
 
 
-def start(func, arg):
-    Thread(target=lambda: func(arg)).start()
+def up(arg):
+    func(arg, "1", 0.1)
+    func(arg, "2", 0.15)
+    func(arg, "3", 0.13)
 
 
 def main():
     master = tk.Tk()
-    status_bar = StatusBar(master)
-    b(status_bar)
+    status_bar = StatusBar(master, expand="up", y=40)
+    # down(status_bar)
+    up(status_bar)
     # for i in range(4):
     #     status_bar.set(form=StatusForm(f"{i}", "3"))
     master.mainloop()
