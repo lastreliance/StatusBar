@@ -1,7 +1,8 @@
-# StatusBar 0.3
+# StatusBar
+## version - 0.3
 ## A tkinter module to present a status bar in app.
 
-## Usage:
+### Usage:
 ``` rb
 root = Tk()
 status_bar = StatusBar(root, x=0, y=0, expand="down", width=200, height=12, bg="yellow")
