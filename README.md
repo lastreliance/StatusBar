@@ -1,6 +1,6 @@
 # StatusBar
 ## version - 0.3
-## A tkinter module to present a status bar in app.
+## A tkinter module to show a status bar in app.
 
 ### Usage:
 ``` rb
